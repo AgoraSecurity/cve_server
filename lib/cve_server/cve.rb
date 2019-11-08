@@ -12,62 +12,52 @@ module CVEServer
       remove_id(super(id: cve))
     end
 
-    def self.all_cpes_equal(cpes)
-      cpes.split(",").collect do |cpe|
-        self.all_cpe_equal(cpe)
-      end.flatten.uniq.sort
+    def self.all(pattern={})
+      super(pattern).map {|entry| remove_id(entry) }
     end
 
-    def self.all_cpe_equal(cpe)
-      all(cpes: /^#{Regexp.escape(cpe)}$/i).collect do |h|
-        h['id']
-      end.uniq.sort
+    def self.all_cpes_equal(cpes)
+      cpes.split(",").collect do |cpe|
+        all_cpe_matches_with(:cpes, cpe)
+      end.flatten.uniq.sort
     end
 
     def self.all_cpes_with_version_equal(cpes)
       cpes.split(",").collect do |cpe|
-        self.all_cpe_with_version_equal(cpe)
+        all_cpe_matches_with(:cpes_with_version, cpe)
       end.flatten.uniq.sort
     end
 
     def self.all_cpes_affected(cpes = nil)
-      result = if cpes.nil?
-                 all.map { |h| h['cpes_affected'] }
-               else
-                 unless cpes.is_a?(Array) or cpes.is_a?(String)
-                   raise TypeError, "'cpes' must be an Array or String"
-                 end
-                 [cpes].flatten.map do |cpe|
-                   all(cpes_affected: /^#{Regexp.escape(cpe.to_s)}$/i).collect do |h|
-                     h['id']
-                   end
-                 end
-               end
-      result.flatten.compact.uniq.sort
+      case cpes
+      when Array
+        cpes.map { |cpe| all_cpe_matches_with(:cpes_affected, cpe) }.flatten.compact.uniq.sort
+      when String
+        all_cpe_matches_with(:cpes_affected, cpes)
+      when NilClass
+        all.map { |h| h['cpes_affected'] }.flatten.compact.uniq.sort
+      else
+        raise TypeError, "'cpes' must be an Array or String"
+      end
     end
 
-    def self.all_cpe_with_version_equal(cpe)
-      all(cpes_with_version: /^#{Regexp.escape(cpe)}$/i).collect do |h|
-        h['id']
-      end.uniq.sort
+    def self.all_cpe_matches_with(field, cpe)
+      all_sorted_by(:id, { field.to_sym => /^#{Regexp.escape(cpe.to_s)}$/ }).distinct(:id)
     end
 
     def self.reduce_cpes
-      total_count = 0
       ["cpes", "cpes_with_version"].each do |field|
-        total_count += map_reduce(mapper(field), reducer, map_reducer_opts(field)).count
+        map_reduce(mapper(field), reducer, map_reducer_opts(field))
       end
-
-      return total_count
     end
 
     def self.mapper(field)
       %Q(
         function() {
           var application_names = [];
-          this.#{field}.forEach(function(cpe, index) {
-            if ((application_names.indexOf(cpe) < 0) && (cpe))
-              application_names.push(cpe);
+          this.#{field}.forEach(function(field, index) {
+            if ((application_names.indexOf(field) < 0) && (field))
+              application_names.push(field);
           });
           for (var i = 0;  i < application_names.length; i++) {
             emit(application_names[i], {count: 1});

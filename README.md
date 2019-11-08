@@ -5,8 +5,8 @@ Simple REST-style web service for the CVE searching.
 ## Requirements
 
   * [Ruby Version Manager](https://rvm.io)
-  * [Ruby 2.3.x or later version](https://www.ruby-lang.org)
-  * [Bundler](http://bundler.io)
+  * [Ruby 2.4.x or later version](https://www.ruby-lang.org)
+  * [Bundler](https://bundler.io)
   * [Mongo DB](https://www.mongodb.org)
 
 ## Getting Started
@@ -24,6 +24,10 @@ curl --ssl -s https://raw.githubusercontent.com/SpiderLabs/cve_server/master/scr
 * Search for an specific CVE using its ID
 
   * http://localhost:port/v1/cve/CVE-2015-3900
+
+* Search for several CVEs
+
+  * http://localhost:port/v1/cves/CVE-2019-14407,CVE-2018-18656
 
 * Search for CVEs related to a CPE without versions
 
@@ -88,4 +92,4 @@ curl --ssl -s https://raw.githubusercontent.com/SpiderLabs/cve_server/master/scr
     RACK_ENV=development puma
 
 ## License
-  CVEServer is released under the [MIT License](http://www.opensource.org/licenses/MIT)
+  CVEServer is released under the [MIT License](https://www.opensource.org/licenses/MIT)

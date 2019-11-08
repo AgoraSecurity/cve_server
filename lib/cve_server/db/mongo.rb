@@ -16,8 +16,8 @@ module CVEServer
         db[@collection].find(pattern)
       end
 
-      def all_sorted_by(attr)
-        db[@collection].find.sort(attr.to_sym => ::Mongo::Index::ASCENDING)
+      def all_sorted_by(attr, pattern={})
+        db[@collection].find(pattern).sort(attr.to_sym => ::Mongo::Index::ASCENDING)
       end
 
       def exist?(args)
@@ -40,7 +40,7 @@ module CVEServer
       end
 
       def map_reduce(mapper, reducer, options = {})
-        db[@collection].find.map_reduce(mapper, reducer, options)
+        db[@collection].find({}, no_cursor_timeout: true).map_reduce(mapper, reducer, options).execute
       end
 
       def remove_id(record)
